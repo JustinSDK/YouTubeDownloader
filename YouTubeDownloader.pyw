@@ -21,46 +21,38 @@ class AppWindow(QDialog):
         
     def downloadAudio(self):
         urls = self.urls()
-        leng = len(urls)
-        if leng == 0:
+        if not urls:
             return
-            
-        dest = self.destPath()
-        ui = self.ui
-        
-        def download():
-            ui.progressBar.setValue(5)
-            for i, url in enumerate(urls):
-                YouTube(url).streams.filter(only_audio=True).filter(subtype='mp4').first().download(dest)
-                ui.progressBar.setValue((i + 1) / leng * 100)
-            ui.progressBar.setValue(100)        
-        
-        Thread(target = download).start()                
+
+        Thread(
+            target = AppWindow.download, 
+            args=(self.ui, urls, self.destPath(), lambda stream: stream.filter(only_audio=True).filter(subtype='mp4'))
+        ).start()                
     
     def downloadVideo(self):
         urls = self.urls()
-        leng = len(urls)
-        if leng == 0:
+        if not urls:
             return
-            
-        dest = self.destPath()
-        ui = self.ui
-        
-        def download():
-            ui.progressBar.setValue(5)
-            for i, url in enumerate(urls):
-                YouTube(url).streams.filter(subtype='mp4').first().download(dest)
-                ui.progressBar.setValue((i + 1) / leng * 100)
-            ui.progressBar.setValue(100)        
-        
-        Thread(target = download).start()
-        
 
+        Thread(
+            target = AppWindow.download, 
+            args=(self.ui, urls, self.destPath(), lambda stream: stream.filter(subtype='mp4'))
+        ).start()            
+      
     def destPath(self):
         return self.ui.lineEditDest.text().strip()
         
     def urls(self):        
         return [url.strip() for url in re.split(r'\n', self.ui.plainTextEditUrls.toPlainText().strip())]
+
+    @staticmethod      
+    def download(ui, urls, dest, streamFilter):
+        leng = len(urls)
+        ui.progressBar.setValue(5)
+        for i, url in enumerate(urls, start=1):
+            streamFilter(YouTube(url).streams).filter(subtype='mp4').first().download(dest)
+            ui.progressBar.setValue(i / leng * 100)        
+                
 
 app = QApplication(sys.argv)
 w = AppWindow()
