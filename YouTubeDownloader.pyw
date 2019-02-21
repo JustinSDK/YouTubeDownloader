@@ -42,8 +42,8 @@ class AppWindow(QDialog):
     def destPath(self):
         return self.ui.lineEditDest.text().strip()
         
-    def urls(self):        
-        return [url.strip() for url in re.split(r'\n', self.ui.plainTextEditUrls.toPlainText().strip())]
+    def urls(self):
+        return [url.strip().split('&')[0] for url in self.ui.plainTextEditUrls.toPlainText().strip().split('\n')]
 
     @staticmethod      
     def download(ui, urls, dest, streamFilter):
